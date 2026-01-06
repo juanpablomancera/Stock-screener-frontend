@@ -3,9 +3,11 @@ nav {
     max-width: 100%;
     background: #ffffff;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 0 5%;
     align-items: center;
     border-bottom: 1px solid black;
+    box-sizing: border-box;
 
 }
 

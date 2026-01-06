@@ -18,6 +18,9 @@ export default function Navbar(){
                 <li>
                     <Link to="/stockscreener" style={{ textDecoration: 'none',color:'#1E1E24' }}>Stock screener</Link>
                 </li>
+                <li>
+                    <Link to="/crypto" style={{ textDecoration: 'none',color:'#1E1E24' }}>Crypto screener</Link>
+                </li>
             </ul>
             <Outlet />
         </nav>

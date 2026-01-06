@@ -10,6 +10,7 @@ import Main from './Main';
 import Register from "./Register"
 import Login from "./Login"
 import Screener from "./Screener"
+import Crypto from "./Crypto";
 
 export default function App() {
 
@@ -20,6 +21,7 @@ export default function App() {
                 <Route path="register" element={<Register/>}/>
                 <Route path="login" element={<Login/>}/>
                 <Route path="stockscreener" element={<Screener/>}/>
+                <Route path="crypto" element={<Crypto/>}/>
             </Routes>
         </BrowserRouter>
     )

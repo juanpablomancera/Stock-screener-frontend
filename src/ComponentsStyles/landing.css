@@ -1,10 +1,13 @@
 section {
     background-image:url("../images/background.jpg");
-    height: 1200px;
+    min-height: 100vh;
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .introduction {
