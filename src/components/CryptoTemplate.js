@@ -1,32 +1,65 @@
 import { useEffect, useState } from "react";
-import "../ComponentsStyles/screenerTemplate.css";
+import {
+    Box,
+    Card,
+    CardContent,
+    Typography,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Checkbox,
+    FormControlLabel,
+    Button,
+    Stack,
+    Divider,
+    Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-export default function ScreenerTemplate() {
+export default function CryptoTemplate() {
     const navigate = useNavigate();
 
     const [cryptoPairs, setCryptoPairs] = useState([]);
     const [selectedSymbol, setSelectedSymbol] = useState("");
     const [selectedFilters, setSelectedFilters] = useState([]);
     const [results, setResults] = useState(null);
+    const [showLoginModal, setShowLoginModal] = useState(false);
 
-    /* ----------------------------------------
-       Fetch crypto pairs from Kraken
-    -----------------------------------------*/
+    const IMPORTANT_BASES = [
+        "XBT", "ETH", "SOL", "ADA", "AVAX",
+        "DOT", "LINK", "MATIC", "ATOM", "LTC",
+        "XRP", "BCH", "UNI", "AAVE"
+    ];
+
+    const IMPORTANT_QUOTES = ["USD", "USDT", "EUR"];
+
     useEffect(() => {
         fetch("https://api.kraken.com/0/public/AssetPairs")
             .then(res => res.json())
             .then(data => {
-                const pairs = Object.keys(data.result)
-                    .sort();
+                const pairs = Object.values(data.result)
+                    .map(pair => {
+                        // Normalize base/quote for whitelist
+                        let base = pair.base.replace(/^X/, "");
+                        let quote = pair.quote.replace(/^Z/, "");
+                        return `${base}/${quote}`;
+                    })
+                    .filter(name => {
+                        const [base, quote] = name.split("/");
+                        return IMPORTANT_BASES.includes(base) && IMPORTANT_QUOTES.includes(quote);
+                    })
+                    .sort((a, b) => a.localeCompare(b));
+
                 setCryptoPairs(pairs);
             })
-            .catch(err => console.error(err));
+            .catch(err => console.error("Kraken fetch error:", err));
     }, []);
 
-    /* ----------------------------------------
-       Handle filter checkbox toggle
-    -----------------------------------------*/
     function toggleFilter(filter) {
         setSelectedFilters(prev =>
             prev.includes(filter)
@@ -35,18 +68,21 @@ export default function ScreenerTemplate() {
         );
     }
 
-    /* ----------------------------------------
-       Submit screener request
-    -----------------------------------------*/
+    // Request
     function handleSubmit(e) {
         e.preventDefault();
-
         const token = sessionStorage.getItem("token");
+
+        // If token missing, show modal
+        if (!token) {
+            setShowLoginModal(true);
+            return;
+        }
 
         fetch("http://localhost:5000/crypto/screener", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
@@ -57,101 +93,123 @@ export default function ScreenerTemplate() {
             .then(res => res.json())
             .then(data => {
                 if (data.msg) {
-                    alert("You're not logged in!");
-                    navigate("/login");
+                    // Token expired
+                    setShowLoginModal(true);
                 } else {
                     setResults(data.results);
                 }
-            });
+            })
+            .catch(err => console.error(err));
     }
 
     return (
-        <div className="template">
-            <h1>Crypto Screener</h1>
+        <Box display="flex" justifyContent="center" mt={6} mb={6}>
+            <Card sx={{ width: 420 }}>
+                <CardContent>
+                    <Typography variant="h5" fontWeight="bold" gutterBottom>
+                        Crypto Screener
+                    </Typography>
 
-            {/* ---------------- Crypto selector ---------------- */}
-            <label>Select Crypto Pair</label>
-            <select
-                value={selectedSymbol}
-                onChange={e => setSelectedSymbol(e.target.value)}
-            >
-                <option value="">-- Choose a pair --</option>
-                {cryptoPairs.map(pair => (
-                    <option key={pair} value={pair}>
-                        {pair}
-                    </option>
-                ))}
-            </select>
+                    <FormControl fullWidth sx={{ mt: 2 }}>
+                        <InputLabel>Crypto Pair</InputLabel>
+                        <Select
+                            value={selectedSymbol}
+                            label="Crypto Pair"
+                            onChange={e => setSelectedSymbol(e.target.value)}
+                        >
+                            {cryptoPairs.map(pair => (
+                                <MenuItem key={pair} value={pair}>
+                                    {pair}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
-            {/* ---------------- Filters ---------------- */}
-            <div className="filters">
-                <label>
-                    <input
-                        type="checkbox"
-                        onChange={() => toggleFilter("trend")}
-                    />
-                    Price above SMA (Trend)
-                </label>
+                    <Divider sx={{ my: 3 }} />
 
-                <label>
-                    <input
-                        type="checkbox"
-                        onChange={() => toggleFilter("volume")}
-                    />
-                    Volume Spike
-                </label>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                        Filters
+                    </Typography>
 
-                <label>
-                    <input
-                        type="checkbox"
-                        onChange={() => toggleFilter("volatility")}
-                    />
-                    Volatility Expansion
-                </label>
-
-                <label>
-                    <input
-                        type="checkbox"
-                        onChange={() => toggleFilter("orderbook")}
-                    />
-                    Order Book Imbalance
-                </label>
-
-                <label>
-                    <input
-                        type="checkbox"
-                        onChange={() => toggleFilter("spread")}
-                    />
-                    Tight Spread (Liquidity)
-                </label>
-            </div>
-
-            <button
-                className="filter-btn"
-                disabled={!selectedSymbol || selectedFilters.length === 0}
-                onClick={handleSubmit}
-            >
-                Run Crypto Screener
-            </button>
-
-            {/* ---------------- Results ---------------- */}
-            {results && (
-                <div className="results">
-                    <h3>Results for {selectedSymbol}</h3>
-                    <ul>
-                        {Object.entries(results).map(([filter, value]) => (
-                            <li key={filter}>
-                                {filter}:{" "}
-                                <strong>
-                                    {typeof value === "boolean"
-                                        ? value ? "PASS ✅" : "FAIL ❌"
-                                        : value}
-                                </strong>
-                            </li>
+                    <Stack>
+                        {[
+                            ["trend", "Price above SMA"],
+                            ["volume", "Volume Spike"],
+                            ["volatility", "Volatility Expansion"],
+                            ["orderbook", "Order Book Imbalance"],
+                            ["spread", "Tight Spread"]
+                        ].map(([key, label]) => (
+                            <FormControlLabel
+                                key={key}
+                                control={<Checkbox onChange={() => toggleFilter(key)} />}
+                                label={label}
+                            />
                         ))}
-                    </ul>
-                </div>
-            )}
-        </div>
+                    </Stack>
+
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        sx={{ mt: 3 }}
+                        disabled={!selectedSymbol || selectedFilters.length === 0}
+                        onClick={handleSubmit}
+                    >
+                        Run Screener
+                    </Button>
+
+                    {results && (
+                        <>
+                            <Divider sx={{ my: 3 }} />
+                            <Typography fontWeight="bold">
+                                Results – {selectedSymbol}
+                            </Typography>
+
+                            <Stack spacing={1} mt={2}>
+                                {Object.entries(results).map(([filter, value]) => (
+                                    <Chip
+                                        key={filter}
+                                        label={`${filter}: ${
+                                            value === true
+                                                ? "PASS"
+                                                : value === false
+                                                    ? "FAIL"
+                                                    : value
+                                        }`}
+                                        color={value === true ? "success" : "default"}
+                                    />
+                                ))}
+                            </Stack>
+                        </>
+                    )}
+
+                    {/* Not logged modal */}
+                    <Dialog
+                        open={showLoginModal}
+                        onClose={() => setShowLoginModal(false)}
+                    >
+                        <DialogTitle>Not Logged In</DialogTitle>
+                        <DialogContent>
+                            <Typography>
+                                You are not logged in or your session has expired.
+                                Please log in to use the Crypto Screener.
+                            </Typography>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button
+                                onClick={() => {
+                                    setShowLoginModal(false);
+                                    navigate("/login");
+                                }}
+                                variant="contained"
+                                color="primary"
+                            >
+                                Go to Login
+                            </Button>
+                            <Button onClick={() => setShowLoginModal(false)}>Cancel</Button>
+                        </DialogActions>
+                    </Dialog>
+                </CardContent>
+            </Card>
+        </Box>
     );
 }

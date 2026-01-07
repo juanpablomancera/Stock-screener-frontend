@@ -1,7 +1,7 @@
 import React from "react"
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import CryptoBTemplate from "./components/CryptoBTemplate";
+import CryptoTemplate from "./components/CryptoTemplate";
 
 
 export default function Crypto() {
@@ -9,7 +9,7 @@ export default function Crypto() {
         <>
             <Navbar />
             <main>
-                <CryptoBTemplate />
+                <CryptoTemplate />
             </main>
             <Footer />
         </>
