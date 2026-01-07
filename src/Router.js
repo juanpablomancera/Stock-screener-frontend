@@ -6,13 +6,13 @@ import {
 } from "react-router-dom";
 
 import './index.css';
-import Main from './Main';
-import Register from "./Register"
-import Login from "./Login"
-import Screener from "./Screener"
-import Crypto from "./Crypto";
+import Main from './Pages/Main';
+import Register from "./Pages/Register"
+import Login from "./Pages/Login"
+import Screener from "./Pages/Screener"
+import Crypto from "./Pages/Crypto";
 
-export default function App() {
+export default function Router() {
 
     return (
         <BrowserRouter>

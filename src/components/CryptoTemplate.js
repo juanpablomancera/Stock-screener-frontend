@@ -210,6 +210,9 @@ export default function CryptoTemplate() {
                     </Dialog>
                 </CardContent>
             </Card>
+        <Card sx={{ m: 6 }}>
+            <h1 sx={{ m: 6 }}>Some text</h1>
+        </Card>
         </Box>
     );
 }
